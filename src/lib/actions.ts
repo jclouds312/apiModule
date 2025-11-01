@@ -113,6 +113,40 @@ export async function findNearbyPlaces(lat: number, lng: number, type: string) {
     return resp.json();
 }
 
+// Shopify: Get products from a Shopify store
+export async function getShopifyProducts() {
+    const { firestore } = initializeFirebase();
+    const integrationDoc = await getDoc(doc(firestore, "integrations", "shopify"));
+
+    if (!integrationDoc.exists() || !integrationDoc.data()?.active) {
+        return { success: false, message: 'Shopify integration is not active or configured.' };
+    }
+
+    const { key: accessToken, storeName } = integrationDoc.data();
+    if (!accessToken || !storeName) {
+        return { success: false, message: 'Shopify store name or access token is not set.' };
+    }
+
+    const url = `https://${storeName}.myshopify.com/admin/api/2024-04/products.json`;
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'X-Shopify-Access-Token': accessToken,
+                'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+        });
+        if (!response.ok) {
+            throw new Error(`Shopify API responded with status ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching Shopify products:', error);
+        return { success: false, message: (error as Error).message };
+    }
+}
+
+
 // Integrations: Fetches all integration configurations from Firestore
 export async function getIntegrations() {
   const { firestore } = initializeFirebase();

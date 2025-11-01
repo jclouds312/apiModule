@@ -9,6 +9,7 @@ import {
   Server,
   BookOpen,
   Map,
+  Store,
 } from 'lucide-react';
 
 export type ApiModule = {
@@ -39,6 +40,13 @@ export const apiModules: ApiModule[] = [
     name: 'Google Maps API',
     description: 'Geocoding and place search functionalities.',
     Icon: Map,
+    defaultActive: true,
+  },
+  {
+    id: 'shopify',
+    name: 'Shopify API',
+    description: 'Interact with Shopify stores to manage products, orders, and more.',
+    Icon: Store,
     defaultActive: true,
   },
   {

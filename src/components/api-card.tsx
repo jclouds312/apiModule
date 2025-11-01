@@ -13,7 +13,8 @@ import {
     sendTestNotification, 
     getSalesReport, 
     getApiStatus,
-    getReservations
+    getReservations,
+    getShopifyProducts
 } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
@@ -40,7 +41,7 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
       return;
     }
 
-    if (!user && ['sales', 'reservations', 'notifications', 'reports'].includes(id)) {
+    if (!user && ['sales', 'reservations', 'notifications', 'reports', 'shopify'].includes(id)) {
         toast({
             variant: "destructive",
             title: "Authentication Required",
@@ -62,6 +63,9 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
                 break;
              case 'google-maps':
                 result = { success: true, message: "Use the 'Google Maps Tool' below to test Geocoding." };
+                break;
+            case 'shopify':
+                result = await getShopifyProducts();
                 break;
             case 'notifications':
                 result = await sendTestNotification();
