@@ -24,7 +24,7 @@ export default function AppSidebar() {
           <span className="text-lg font-semibold font-headline">Modular APIs</span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-2">
+      <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === '/'}>
