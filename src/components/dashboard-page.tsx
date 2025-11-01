@@ -7,7 +7,6 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import AppSidebar from './app-sidebar';
 import Header from './header';
 import { useUser } from '@/firebase';
-import AuthForm from './auth-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { getProducts } from '@/lib/actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
