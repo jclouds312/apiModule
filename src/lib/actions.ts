@@ -4,33 +4,63 @@ import { revalidatePath } from "next/cache";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002/api';
 
-export async function getProducts() {
+async function fetchApi(endpoint: string, options?: RequestInit) {
     try {
-        const res = await fetch(`${API_BASE_URL}/sales`, { cache: 'no-store'});
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+            cache: 'no-store',
+            ...options
+        });
         if (!res.ok) {
-            throw new Error(`Failed to fetch products: ${res.statusText}`);
+            const errorBody = await res.text();
+            console.error(`API Error (${res.status}) on ${endpoint}: ${errorBody}`);
+            throw new Error(`Request failed with status ${res.status}`);
         }
-        return res.json();
+        // Handle cases where response might be empty
+        const text = await res.text();
+        return text ? JSON.parse(text) : { success: true };
     } catch (error) {
-        console.error(error);
-        return [];
+        console.error(`Fetch error for endpoint ${endpoint}:`, error);
+        return { success: false, message: (error as Error).message };
     }
 }
 
+
+// Sales
+export async function getProducts() {
+    return fetchApi('/sales');
+}
+
+// Reservations
 export async function createReservation(data: any) {
-    try {
-        const res = await fetch(`${API_BASE_URL}/reservations`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) {
-            throw new Error(`Failed to create reservation: ${res.statusText}`);
-        }
+    const result = await fetchApi('/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    if (result.success) {
         revalidatePath('/');
-        return res.json();
-    } catch (error) {
-        console.error(error);
-        return { success: false, message: (error as Error).message };
     }
+    return result;
+}
+
+// Notifications
+export async function sendTestNotification() {
+    return fetchApi('/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            destino: 'test@example.com',
+            mensaje: 'This is a test notification!'
+        }),
+    });
+}
+
+// Reports
+export async function getSalesReport() {
+    return fetchApi('/reports');
+}
+
+// API Status
+export async function getApiStatus() {
+    return fetchApi('/status');
 }
