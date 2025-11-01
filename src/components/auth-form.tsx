@@ -28,6 +28,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 
+const ADMIN_EMAIL = 'johnatanvallejomarulanda@gmail.com';
+
 const registerSchema = z.object({
   displayName: z.string().min(2, { message: 'Display name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -88,7 +90,7 @@ const AuthFormContent = ({ type }: AuthFormProps) => {
         await updateProfile(user, { displayName: registerValues.displayName });
 
         // Assign 'admin' role if the email matches, otherwise 'customer'
-        const userRole = registerValues.email === 'johnatanvallejomarulanda@gmail.com' ? 'admin' : 'customer';
+        const userRole = registerValues.email === ADMIN_EMAIL ? 'admin' : 'customer';
 
         await setDoc(doc(firestore, 'users', user.uid), {
           uid: user.uid,
@@ -185,7 +187,7 @@ export default function AuthForm({ type }: AuthFormProps) {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      const userRole = user.email === 'johnatanvallejomarulanda@gmail.com' ? 'admin' : 'customer';
+      const userRole = user.email === ADMIN_EMAIL ? 'admin' : 'customer';
 
       await setDoc(doc(firestore, 'users', user.uid), {
         uid: user.uid,
