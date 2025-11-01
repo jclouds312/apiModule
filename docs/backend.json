@@ -130,6 +130,26 @@
         }
       },
       "required": ["userId", "transcription", "createdAt"]
+    },
+    "Integration": {
+      "title": "Integration",
+      "description": "Represents an external API integration with its credentials.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the integration (e.g., 'google-maps')."
+        },
+        "key": {
+          "type": "string",
+          "description": "The API key or secret for the integration."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether the integration is currently active."
+        }
+      },
+      "required": ["name", "active"]
     }
   },
   "auth": {
@@ -165,6 +185,12 @@
         "$ref": "#/entities/Quote"
       },
       "description": "Stores voice-generated quotes."
+    },
+    "/integrations/{integrationId}": {
+      "schema": {
+        "$ref": "#/entities/Integration"
+      },
+      "description": "Stores API keys and configurations for external service integrations."
     }
   }
 }

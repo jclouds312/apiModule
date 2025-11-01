@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath } from "next/cache";
+import { initializeFirebase } from "@/firebase";
+import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002/api';
 
@@ -15,7 +17,6 @@ async function fetchApi(endpoint: string, options?: RequestInit) {
             console.error(`API Error (${res.status}) on ${endpoint}: ${errorBody}`);
             throw new Error(`Request failed with status ${res.status}`);
         }
-        // Handle cases where response might be empty
         const text = await res.text();
         return text ? JSON.parse(text) : { success: true };
     } catch (error) {
@@ -72,4 +73,32 @@ export async function geocodeAddress(address: string) {
 
 export async function findNearbyPlaces(lat: number, lng: number, type: string) {
     return fetchApi(`/maps/places?lat=${lat}&lng=${lng}&type=${type}`);
+}
+
+// Integrations
+export async function getIntegrations() {
+  const { firestore } = initializeFirebase();
+  try {
+    const integrationsCollection = collection(firestore, "integrations");
+    const snapshot = await getDocs(integrationsCollection);
+    if (snapshot.empty) return [];
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching integrations: ", error);
+    // Return empty array on error to avoid crashing the client
+    return [];
+  }
+}
+
+export async function updateIntegration(name: string, data: { active: boolean, key?: string }) {
+  const { firestore } = initializeFirebase();
+  try {
+    const integrationRef = doc(firestore, "integrations", name);
+    await setDoc(integrationRef, data, { merge: true });
+    revalidatePath('/'); // Revalidate the page to show the updated state
+    return { success: true, message: `Integration ${name} updated.` };
+  } catch (error) {
+    console.error(`Error updating integration ${name}: `, error);
+    return { success: false, message: (error as Error).message };
+  }
 }

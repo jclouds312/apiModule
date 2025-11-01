@@ -15,6 +15,7 @@ import { Badge } from './ui/badge';
 import VoiceQuoteTool from './voice-quote-tool';
 import AiPlayground from './ai-playground';
 import GoogleMapsTool from './google-maps-tool';
+import IntegrationsManager from './integrations-manager';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -25,9 +26,18 @@ function ProductList() {
     useEffect(() => {
         async function fetchProducts() {
             setLoading(true);
-            const productList = await getProducts();
-            setProducts(productList);
-            setLoading(false);
+            try {
+                const productList = await getProducts();
+                if (Array.isArray(productList)) {
+                    setProducts(productList);
+                } else {
+                    setProducts([]);
+                }
+            } catch (e) {
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
         }
         fetchProducts();
     }, []);
@@ -125,6 +135,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={user ? "lg:col-span-3" : "lg:col-span-2"}>
               <ApiModulesGrid />
+              {user && <IntegrationsManager />}
               {user && <VoiceQuoteTool />}
               {user && <AiPlayground />}
               {user && <GoogleMapsTool />}
