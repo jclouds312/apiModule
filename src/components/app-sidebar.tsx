@@ -21,7 +21,7 @@ export default function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <Terminal className="h-7 w-7 text-primary" />
-          <span className="text-lg font-semibold font-headline">Modular APIs</span>
+          <span className="text-lg font-semibold font-headline">Modular APIs Hub</span>
         </div>
       </SidebarHeader>
       <SidebarContent>

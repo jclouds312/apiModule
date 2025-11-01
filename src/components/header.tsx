@@ -26,6 +26,7 @@ function UserNav() {
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
+      // You might want to redirect the user to the login page or home page after logout.
     }
   };
 
