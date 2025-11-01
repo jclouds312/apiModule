@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { getProducts } from '@/lib/actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
+import VoiceQuoteTool from './voice-quote-tool';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -122,6 +123,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={user ? "lg:col-span-3" : "lg:col-span-2"}>
               <ApiModulesGrid />
+              {user && <VoiceQuoteTool />}
               <ProductList />
             </div>
             {!user && !loading && (
