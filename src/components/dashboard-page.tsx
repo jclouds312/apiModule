@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiModules, type ApiModule } from '@/lib/apis';
 import ApiCard from '@/components/api-card';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -9,8 +9,69 @@ import Header from './header';
 import { useUser } from '@/firebase';
 import AuthForm from './auth-form';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { getProducts } from '@/lib/actions';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Badge } from './ui/badge';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
+
+function ProductList() {
+    const [products, setProducts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchProducts() {
+            setLoading(true);
+            const productList = await getProducts();
+            setProducts(productList);
+            setLoading(false);
+        }
+        fetchProducts();
+    }, []);
+
+    return (
+        <div className="mt-8">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground font-headline mb-4">
+                Products
+            </h2>
+            <Card>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Category</TableHead>
+                                <TableHead className="text-right">Price</TableHead>
+                                <TableHead className="text-right">Stock</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center">Loading products...</TableCell>
+                                </TableRow>
+                            ) : products.length > 0 ? (
+                                products.map((product) => (
+                                    <TableRow key={product.id}>
+                                        <TableCell className="font-medium">{product.name}</TableCell>
+                                        <TableCell><Badge variant="outline">{product.category}</Badge></TableCell>
+                                        <TableCell className="text-right">${product.price?.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right">{product.stock}</TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center">No products found. Add some to your 'products' collection in Firestore.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
 
 function ApiModulesGrid() {
   const [modules, setModules] = useState<ApiModuleWithState[]>(
@@ -61,6 +122,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={user ? "lg:col-span-3" : "lg:col-span-2"}>
               <ApiModulesGrid />
+              <ProductList />
             </div>
             {!user && !loading && (
                <div className="lg:col-span-1">
