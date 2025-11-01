@@ -2,13 +2,34 @@
 
 import { revalidatePath } from "next/cache";
 import { initializeFirebase } from "@/firebase";
-import { collection, getDocs, doc, setDoc, addDoc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, addDoc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // This file contains Server Actions, which are secure, server-side functions
 // that can be called directly from client components. This is a Next.js feature.
 
+// Helper to increment usage count for a specific API module
+async function incrementUsage(moduleId: string) {
+    const { firestore } = initializeFirebase();
+    try {
+        const moduleRef = doc(firestore, "apiModules", moduleId);
+        await updateDoc(moduleRef, {
+            usageCount: increment(1)
+        });
+    } catch (error) {
+        // Non-critical, so we just log it on the server
+        console.error(`Failed to increment usage for ${moduleId}:`, error);
+    }
+}
+
+
 // Generic API fetcher for routes that are designed to be public
 async function fetchApi(endpoint: string, options?: RequestInit) {
+    // Before fetching, increment the usage count based on the endpoint
+    const moduleId = endpoint.split('/')[1]; // e.g., /sales -> sales
+    if (moduleId) {
+        await incrementUsage(moduleId);
+    }
+
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002/api';
@@ -80,6 +101,7 @@ export async function getApiStatus() {
 // This is a secure server action. It reads the API key from Firestore on the server
 // and makes the call to Google, so the key is never exposed to the client.
 export async function geocodeAddress(address: string) {
+    await incrementUsage('google-maps');
     const { firestore } = initializeFirebase();
     const integrationDoc = await getDoc(doc(firestore, "integrations", "google-maps"));
 
@@ -98,6 +120,7 @@ export async function geocodeAddress(address: string) {
 
 // Google Maps: Finds nearby places
 export async function findNearbyPlaces(lat: number, lng: number, type: string) {
+    await incrementUsage('google-maps');
     const { firestore } = initializeFirebase();
     const integrationDoc = await getDoc(doc(firestore, "integrations", "google-maps"));
      if (!integrationDoc.exists() || !integrationDoc.data()?.active) {
@@ -115,6 +138,7 @@ export async function findNearbyPlaces(lat: number, lng: number, type: string) {
 
 // Shopify: Get products from a Shopify store
 export async function getShopifyProducts() {
+    await incrementUsage('shopify');
     const { firestore } = initializeFirebase();
     const integrationDoc = await getDoc(doc(firestore, "integrations", "shopify"));
 
