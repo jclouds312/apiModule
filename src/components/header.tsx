@@ -86,7 +86,7 @@ export default function Header() {
         <SidebarTrigger />
         <div className="flex items-center gap-2 font-semibold">
           <Terminal className="h-6 w-6 text-primary" />
-          <span className="text-lg font-headline">Modular APIs Hub</span>
+          <span className="text-lg font-headline">API Hub Colombia</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
