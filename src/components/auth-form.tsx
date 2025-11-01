@@ -89,15 +89,18 @@ const AuthFormContent = ({ type }: AuthFormProps) => {
         const user = userCredential.user;
         await updateProfile(user, { displayName: registerValues.displayName });
 
+        // Assign 'admin' role if the email matches, otherwise 'customer'
+        const userRole = registerValues.email === 'johnatanvallejomarulanda@gmail.com' ? 'admin' : 'customer';
+
         await setDoc(doc(firestore, 'users', user.uid), {
           uid: user.uid,
           email: user.email,
           displayName: registerValues.displayName,
           photoURL: user.photoURL,
-          role: 'customer', // default role
+          role: userRole,
         });
 
-        toast({ title: 'Registration successful!', description: 'Welcome!' });
+        toast({ title: 'Registration successful!', description: `Welcome! Your role is: ${userRole}.` });
         router.refresh();
       }
     } catch (error: any) {
@@ -183,16 +186,18 @@ export default function AuthForm({ type }: AuthFormProps) {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      
+      const userRole = user.email === 'johnatanvallejomarulanda@gmail.com' ? 'admin' : 'customer';
 
       await setDoc(doc(firestore, 'users', user.uid), {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
-        role: 'customer',
+        role: userRole,
       }, { merge: true });
 
-      toast({ title: 'Signed in with Google!', description: 'Redirecting...' });
+      toast({ title: 'Signed in with Google!', description: `Redirecting... Your role is: ${userRole}.` });
       router.refresh();
     } catch (error: any) {
       toast({
