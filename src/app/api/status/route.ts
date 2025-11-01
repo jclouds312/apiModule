@@ -1,10 +1,8 @@
 // /api/status
 import { NextResponse } from 'next/server';
+import { getApiStatus } from '@/lib/actions';
 
 export async function GET() {
-  return NextResponse.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    message: 'Backend is running correctly. 🚀',
-  });
+  const status = await getApiStatus();
+  return NextResponse.json(status);
 }

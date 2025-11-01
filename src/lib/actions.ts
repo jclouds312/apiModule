@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { initializeFirebase } from "@/firebase";
-import { collection, getDocs, doc, setDoc, addDoc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, addDoc, getDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 
 // This file contains Server Actions, which are secure, server-side functions
 // that can be called directly from client components. This is a Next.js feature.
@@ -21,85 +21,90 @@ async function incrementUsage(moduleId: string) {
     }
 }
 
-
-// Generic API fetcher for routes that are designed to be public
-async function fetchApi(endpoint: string, options?: RequestInit) {
-    // Before fetching, increment the usage count based on the endpoint
-    const moduleId = endpoint.split('/')[1]; // e.g., /sales -> sales
-    if (moduleId) {
-        await incrementUsage(moduleId);
-    }
-
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002/api';
-    try {
-        const res = await fetch(`${baseUrl}${endpoint}`, {
-            cache: 'no-store',
-            ...options
-        });
-        if (!res.ok) {
-            const errorBody = await res.text();
-            console.error(`API Error (${res.status}) on ${endpoint}: ${errorBody}`);
-            throw new Error(`Request failed with status ${res.status}`);
-        }
-        const text = await res.text();
-        return text ? JSON.parse(text) : { success: true };
-    } catch (error) {
-        console.error(`Fetch error for endpoint ${endpoint}:`, error);
-        return { success: false, message: (error as Error).message };
-    }
-}
-
-
 // Sales: Fetches all products
 export async function getProducts() {
-    return fetchApi('/sales');
+    await incrementUsage('sales');
+    const { firestore } = initializeFirebase();
+    try {
+        const productsCollection = collection(firestore, "products");
+        const productSnapshot = await getDocs(productsCollection);
+        const productList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return productList;
+    } catch (error: any) {
+        console.error("Error fetching products: ", error);
+        return []; // Return empty array on error
+    }
 }
 
 // Reservations: Fetches all reservations
 export async function getReservations() {
-    return fetchApi('/reservations');
+    await incrementUsage('reservations');
+    const { firestore } = initializeFirebase();
+    try {
+        const reservationsCollection = collection(firestore, "reservations");
+        const snapshot = await getDocs(reservationsCollection);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error: any) {
+        console.error("Error fetching reservations: ", error);
+        return [];
+    }
 }
 
 // Reservations: Creates a new reservation
 export async function createReservation(data: { service: string, date: string, time: string, userId: string }) {
-    const result = await fetchApi('/reservations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-    });
-    if (result.success) {
+    await incrementUsage('reservations');
+    const { firestore } = initializeFirebase();
+    try {
+         const docRef = await addDoc(collection(firestore, "reservations"), {
+            ...data,
+            status: "pending",
+            createdAt: serverTimestamp()
+        });
         revalidatePath('/'); // Revalidate the page to show new data
+        return { success: true, id: docRef.id };
+    } catch (error: any) {
+        return { success: false, message: error.message };
     }
-    return result;
 }
 
 // Notifications: Sends a test notification
 export async function sendTestNotification() {
-    return fetchApi('/notifications', {
-        method: 'POST',
-        headers: { 'ContentType': 'application/json' },
-        body: JSON.stringify({
-            destino: 'test@example.com',
-            mensaje: 'This is a test notification!'
-        }),
-    });
+    await incrementUsage('notifications');
+     // TODO: Implement actual notification logic with Twilio, SendGrid, etc.
+    console.log(`Sending notification to test@example.com: "This is a test notification!"`);
+    return { success: true, message: `Notification queued for test@example.com` };
 }
 
 // Reports: Fetches the sales report
 export async function getSalesReport() {
-    return fetchApi('/reports');
+    await incrementUsage('reports');
+    const { firestore } = initializeFirebase();
+    try {
+        const salesCollection = collection(firestore, "sales");
+        const salesSnapshot = await getDocs(salesCollection);
+        
+        const salesData = salesSnapshot.docs.map(doc => doc.data());
+        const totalSales = salesData.reduce((sum, sale) => sum + (sale.total || 0), 0);
+        const numSales = salesSnapshot.size;
+
+        return { totalSales, numSales };
+    } catch (error: any) {
+        console.error("Error fetching sales report: ", error);
+        return { success: false, message: error.message };
+    }
 }
 
 // API Status: Fetches the backend status
 export async function getApiStatus() {
-    return fetchApi('/status');
+    await incrementUsage('api-status');
+    return {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        message: 'Backend is running correctly. 🚀',
+    };
 }
 
 // Google Maps: Geocodes an address
-// This is a secure server action. It reads the API key from Firestore on the server
-// and makes the call to Google, so the key is never exposed to the client.
 export async function geocodeAddress(address: string) {
     await incrementUsage('google-maps');
     const { firestore } = initializeFirebase();
@@ -170,7 +175,6 @@ export async function getShopifyProducts() {
     }
 }
 
-
 // Integrations: Fetches all integration configurations from Firestore
 export async function getIntegrations() {
   const { firestore } = initializeFirebase();
@@ -178,12 +182,9 @@ export async function getIntegrations() {
     const integrationsCollection = collection(firestore, "integrations");
     const snapshot = await getDocs(integrationsCollection);
     if (snapshot.empty) return [];
-    // Only return data if the user is an admin (security is enforced by Firestore rules, but good to double-check)
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error("Error fetching integrations: ", error);
-    // On error, return an empty array to prevent client-side crashes.
-    // The error will be logged on the server.
     return [];
   }
 }
@@ -193,9 +194,8 @@ export async function updateIntegration(id: string, data: Partial<{ active: bool
   const { firestore } = initializeFirebase();
   try {
     const integrationRef = doc(firestore, "integrations", id);
-    // 'set' with 'merge: true' will update or create the document.
     await setDoc(integrationRef, data, { merge: true });
-    revalidatePath('/'); // Revalidate the page to show the updated state
+    revalidatePath('/'); 
     return { success: true, message: `Integration ${id} updated.` };
   } catch (error) {
     console.error(`Error updating integration ${id}: `, error);

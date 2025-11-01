@@ -1,20 +1,22 @@
 // /api/sales
 import { NextResponse } from 'next/server';
-import { initializeFirebase } from '@/firebase';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getProducts } from '@/lib/actions';
 
+// This API route can be used by external services to get product data.
+// The primary logic is now in the server action.
 export async function GET() {
-  const { firestore } = initializeFirebase();
   try {
-    const productsCollection = collection(firestore, "products");
-    const productSnapshot = await getDocs(productsCollection);
-    const productList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const productList = await getProducts();
     return NextResponse.json(productList);
   } catch (error: any) {
-    console.error("Error fetching products: ", error);
+    console.error("Error fetching products via API route: ", error);
     return NextResponse.json({ success: false, message: error.message || 'Failed to fetch products.' }, { status: 500 });
   }
 }
+
+// The POST logic for creating products via API can remain if needed for external use.
+import { initializeFirebase } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export async function POST(request: Request) {
   const { firestore } = initializeFirebase();
