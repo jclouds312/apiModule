@@ -2,3 +2,4 @@ import { config } from 'dotenv';
 config();
 
 import '@/ai/flows/voice-command-to-quote.ts';
+import '@/ai/flows/ask-gemini-flow.ts';

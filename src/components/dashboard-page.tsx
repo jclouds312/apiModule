@@ -13,6 +13,7 @@ import { getProducts } from '@/lib/actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
 import VoiceQuoteTool from './voice-quote-tool';
+import AiPlayground from './ai-playground';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -124,6 +125,7 @@ export default function DashboardPage() {
             <div className={user ? "lg:col-span-3" : "lg:col-span-2"}>
               <ApiModulesGrid />
               {user && <VoiceQuoteTool />}
+              {user && <AiPlayground />}
               <ProductList />
             </div>
             {!user && !loading && (
