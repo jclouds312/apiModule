@@ -7,6 +7,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarFooter,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Home, Settings, Terminal } from 'lucide-react';
 import Link from 'next/link';
@@ -18,8 +20,8 @@ export default function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <Terminal className="h-6 w-6 text-primary" />
-          <span className="text-lg font-semibold font-headline">Modular APIs Hub</span>
+          <Terminal className="h-7 w-7 text-primary" />
+          <span className="text-lg font-semibold font-headline">Modular APIs</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
@@ -42,6 +44,11 @@ export default function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+        <div className="md:hidden">
+          <SidebarTrigger/>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
