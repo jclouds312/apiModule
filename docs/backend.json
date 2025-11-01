@@ -31,6 +31,40 @@
       },
       "required": ["uid", "email"]
     },
+    "ApiModule": {
+      "title": "API Module",
+      "description": "Represents the state and configuration of an API module in the system.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The human-readable name of the API."
+        },
+        "description": {
+          "type": "string",
+          "description": "A short summary of what the API does."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category the API belongs to (e.g., 'AI', 'Commerce')."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "inactive", "maintenance"],
+          "description": "The current operational status of the API."
+        },
+        "usageCount": {
+          "type": "number",
+          "description": "How many times the API has been called."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the API module was first registered in the system."
+        }
+      },
+      "required": ["name", "status"]
+    },
     "Product": {
       "title": "Product",
       "description": "Represents a product in the sales system.",
@@ -161,6 +195,12 @@
         "$ref": "#/entities/User"
       },
       "description": "Stores user profile information."
+    },
+     "/apiModules/{moduleId}": {
+      "schema": {
+        "$ref": "#/entities/ApiModule"
+      },
+      "description": "Stores the configuration and status for each API module."
     },
     "/sales/{saleId}": {
       "schema": {
