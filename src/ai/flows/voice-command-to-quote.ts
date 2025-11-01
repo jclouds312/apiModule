@@ -67,13 +67,14 @@ const voiceCommandToQuoteFlow = ai.defineFlow(
     const { quote, transcription } = output;
 
     // 2. Save the quote to Firestore
+    // Using 'quotes' collection as defined in backend.json
     const quotesCollection = collection(firestore, 'quotes');
     const newQuoteRef = await addDoc(quotesCollection, {
       userId: input.userId,
       transcription: transcription,
       quoteDetails: quote,
       createdAt: serverTimestamp(),
-      status: 'generated',
+      status: 'generated', // You can use this field to track quote status
     });
 
     // 3. Return the result including the new document ID
