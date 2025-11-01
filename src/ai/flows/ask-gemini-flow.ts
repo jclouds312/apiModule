@@ -14,7 +14,7 @@ import { z } from 'genkit';
 const AskGeminiInputSchema = z.object({
   question: z.string().describe('The question to ask the AI.'),
 });
-export type AskGeminiInput = z.infer<typeof AskYGeminiInputSchema>;
+export type AskGeminiInput = z.infer<typeof AskGeminiInputSchema>;
 
 const AskGeminiOutputSchema = z.string().describe("The AI's answer.");
 export type AskGeminiOutput = z.infer<typeof AskGeminiOutputSchema>;
