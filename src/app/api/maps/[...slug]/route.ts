@@ -1,16 +1,13 @@
 // /api/maps/[...slug]
 import { NextResponse } from 'next/server';
+import { findNearbyPlaces, geocodeAddress } from '@/lib/actions';
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-const GOOGLE_MAPS_API_URL = 'https://maps.googleapis.com/maps/api';
+// This API route is now primarily for client-side use cases that do not expose sensitive keys.
+// The main logic has been moved to Server Actions for security.
 
 export async function GET(request: Request, { params }: { params: { slug: string[] } }) {
   const [action] = params.slug;
   const { searchParams } = new URL(request.url);
-
-  if (!GOOGLE_MAPS_API_KEY) {
-      return NextResponse.json({ success: false, message: 'Google Maps API key is not configured.' }, { status: 500 });
-  }
 
   try {
     switch (action) {
@@ -19,9 +16,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
         if (!address) {
           return NextResponse.json({ success: false, message: 'Address parameter is required.' }, { status: 400 });
         }
-        const url = `${GOOGLE_MAPS_API_URL}/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
+        // Calls the secure server action
+        const data = await geocodeAddress(address);
         return NextResponse.json(data);
       }
       
@@ -32,9 +28,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
         if (!lat || !lng || !type) {
             return NextResponse.json({ success: false, message: 'lat, lng, and type parameters are required.' }, { status: 400 });
         }
-        const url = `${GOOGLE_MAPS_API_URL}/place/nearbysearch/json?location=${lat},${lng}&radius=2000&type=${type}&key=${GOOGLE_MAPS_API_KEY}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
+        // Calls the secure server action
+        const data = await findNearbyPlaces(parseFloat(lat), parseFloat(lng), type);
         return NextResponse.json(data);
       }
 

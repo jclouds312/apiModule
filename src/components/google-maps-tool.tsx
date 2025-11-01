@@ -29,6 +29,7 @@ export default function GoogleMapsTool() {
     setResult(null);
 
     try {
+      // Call the server action directly
       const response = await geocodeAddress(address);
       if (response.status === 'OK') {
         setResult(response.results[0]);
