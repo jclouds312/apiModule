@@ -16,6 +16,7 @@ interface Integration {
   name: string;
   key: string;
   active: boolean;
+  storeUrl?: string; // Add optional storeUrl for Shopify
 }
 
 export default function IntegrationsManager() {
@@ -23,17 +24,19 @@ export default function IntegrationsManager() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  const fetchIntegrations = async () => {
+    setLoading(true);
+    const data = await getIntegrations();
+    setIntegrations(Array.isArray(data) ? data as Integration[] : []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    async function fetchIntegrations() {
-      setLoading(true);
-      const data = await getIntegrations();
-      setIntegrations(data);
-      setLoading(false);
-    }
     fetchIntegrations();
   }, []);
 
   const handleToggle = async (integration: Integration) => {
+    const oldActiveState = integration.active;
     // Optimistic update
     setIntegrations(prev => 
       prev.map(i => i.id === integration.id ? { ...i, active: !i.active } : i)
@@ -49,13 +52,23 @@ export default function IntegrationsManager() {
     } else {
       // Revert on failure
       setIntegrations(prev => 
-        prev.map(i => i.id === integration.id ? { ...i, active: integration.active } : i)
+        prev.map(i => i.id === integration.id ? { ...i, active: oldActiveState } : i)
       );
       toast({
         variant: 'destructive',
         title: 'Update Failed',
         description: result.message,
       });
+    }
+  };
+  
+   const handleKeyChange = async (id: string, newKey: string) => {
+    const result = await updateIntegration(id, { key: newKey });
+    if (result.success) {
+      toast({ title: 'API Key Updated', description: `Key for ${id} has been saved.` });
+      fetchIntegrations(); // Re-fetch to ensure state is correct
+    } else {
+      toast({ variant: 'destructive', title: 'Update Failed', description: result.message });
     }
   };
 
@@ -99,29 +112,35 @@ export default function IntegrationsManager() {
                 <TableRow>
                   <TableHead>Service</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>API Key</TableHead>
+                  <TableHead className="w-[50%]">API Key / Details</TableHead>
                   <TableHead className="text-right">Toggle</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {integrations.map((integration) => (
                   <TableRow key={integration.id}>
-                    <TableCell className="font-medium">{integration.name}</TableCell>
+                    <TableCell className="font-medium capitalize">{integration.name.replace('-', ' ')}</TableCell>
                     <TableCell>
                       <Badge variant={integration.active ? 'default' : 'outline'}>
                         {integration.active ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                        <div className="flex items-center gap-2">
+                        <Input
+                            type="password"
+                            defaultValue={integration.key}
+                            className="font-code text-xs"
+                            placeholder="Set API Key..."
+                            onBlur={(e) => handleKeyChange(integration.id, e.target.value)}
+                        />
+                        {integration.id === 'shopify' && (
                             <Input
-                                type="password"
-                                defaultValue={integration.key}
-                                className="font-code text-xs"
-                                placeholder="No key set"
-                                readOnly
-                            />
-                        </div>
+                                defaultValue={integration.storeUrl}
+                                className="font-code text-xs mt-2"
+                                placeholder="your-store.myshopify.com"
+                                onBlur={(e) => updateIntegration(integration.id, { storeUrl: e.target.value })}
+                             />
+                        )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Switch
@@ -135,8 +154,7 @@ export default function IntegrationsManager() {
             </Table>
           ) : (
             <p className="text-center text-muted-foreground p-8">
-                No integrations found. You can add them to your 'integrations' collection in Firestore.
-                For example, add a document with ID 'google-maps' and fields 'name', 'active', and 'key'.
+                No integrations found. Add documents to your 'integrations' collection in Firestore.
             </p>
           )}
         </CardContent>

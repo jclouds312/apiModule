@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { initializeFirebase } from "@/firebase";
-import { collection, getDocs, doc, setDoc, addDoc, getDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, addDoc, getDoc, updateDoc, increment, serverTimestamp, query, orderBy, limit } from "firebase/firestore";
 
 // This file contains Server Actions, which are secure, server-side functions
 // that can be called directly from client components. This is a Next.js feature.
@@ -57,7 +57,7 @@ export async function createReservation(data: { service: string, date: string, t
     try {
          const docRef = await addDoc(collection(firestore, "reservations"), {
             ...data,
-            status: "pending",
+            status: "confirmed", // Changed from pending to confirmed for demo
             createdAt: serverTimestamp()
         });
         revalidatePath('/'); // Revalidate the page to show new data
@@ -67,27 +67,37 @@ export async function createReservation(data: { service: string, date: string, t
     }
 }
 
-// Notifications: Sends a test notification
+// Notifications: Sends a test notification (placeholder logic)
 export async function sendTestNotification() {
     await incrementUsage('notifications');
-     // TODO: Implement actual notification logic with Twilio, SendGrid, etc.
-    console.log(`Sending notification to test@example.com: "This is a test notification!"`);
-    return { success: true, message: `Notification queued for test@example.com` };
+    // In a real app, you would integrate with a service like Twilio (SMS), SendGrid (Email), etc.
+    // We would use the API key from the 'integrations' collection in Firestore.
+    // For now, we'll just log it to the console as a proof-of-concept.
+    console.log(`[Notification Service] Sending test notification...`);
+    console.log(`- To: test@example.com`);
+    console.log(`- Message: "This is a test notification from the Modular APIs Hub."`);
+    return { success: true, message: `Test notification logged to server console.` };
 }
 
-// Reports: Fetches the sales report
+// Reports: Fetches a summary report of sales and reservations
 export async function getSalesReport() {
     await incrementUsage('reports');
     const { firestore } = initializeFirebase();
     try {
-        const salesCollection = collection(firestore, "sales");
-        const salesSnapshot = await getDocs(salesCollection);
-        
-        const salesData = salesSnapshot.docs.map(doc => doc.data());
-        const totalSales = salesData.reduce((sum, sale) => sum + (sale.total || 0), 0);
-        const numSales = salesSnapshot.size;
+        const salesQuery = query(collection(firestore, "sales"), orderBy('createdAt', 'desc'), limit(10));
+        const salesSnapshot = await getDocs(salesQuery);
+        const salesData = salesSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        const totalSalesValue = salesData.reduce((sum, sale) => sum + (sale.total || 0), 0);
 
-        return { totalSales, numSales };
+        const reservationsQuery = query(collection(firestore, "reservations"), orderBy('createdAt', 'desc'), limit(10));
+        const reservationsSnapshot = await getDocs(reservationsQuery);
+        
+        return { 
+            totalSales: totalSalesValue, 
+            salesCount: salesSnapshot.size, 
+            reservationsCount: reservationsSnapshot.size,
+            recentSales: salesData
+        };
     } catch (error: any) {
         console.error("Error fetching sales report: ", error);
         return { success: false, message: error.message };
@@ -100,7 +110,7 @@ export async function getApiStatus() {
     return {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        message: 'Backend is running correctly. 🚀',
+        message: 'All systems operational. 🚀',
     };
 }
 
@@ -120,6 +130,11 @@ export async function geocodeAddress(address: string) {
     
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
     const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) {
+        const errorText = await resp.text();
+        console.error('Google Maps API Error:', errorText);
+        return { status: 'ERROR', error_message: `Google Maps API request failed with status ${resp.status}. Check server logs for details.`};
+    }
     return resp.json();
 }
 
@@ -138,6 +153,11 @@ export async function findNearbyPlaces(lat: number, lng: number, type: string) {
     
     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=2000&type=${type}&key=${apiKey}`;
     const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) {
+        const errorText = await resp.text();
+        console.error('Google Maps API Error:', errorText);
+        return { status: 'ERROR', error_message: `Google Maps API request failed with status ${resp.status}. Check server logs for details.`};
+    }
     return resp.json();
 }
 
@@ -151,12 +171,12 @@ export async function getShopifyProducts() {
         return { success: false, message: 'Shopify integration is not active or configured.' };
     }
 
-    const { key: accessToken, storeName } = integrationDoc.data();
-    if (!accessToken || !storeName) {
-        return { success: false, message: 'Shopify store name or access token is not set.' };
+    const { key: accessToken, storeUrl } = integrationDoc.data() as { key: string, storeUrl: string };
+    if (!accessToken || !storeUrl) {
+        return { success: false, message: 'Shopify store URL or access token is not set in integrations/shopify.' };
     }
 
-    const url = `https://${storeName}.myshopify.com/admin/api/2024-04/products.json`;
+    const url = `${storeUrl}/admin/api/2024-04/products.json`;
     try {
         const response = await fetch(url, {
             headers: {
@@ -166,7 +186,9 @@ export async function getShopifyProducts() {
             cache: 'no-store',
         });
         if (!response.ok) {
-            throw new Error(`Shopify API responded with status ${response.status}`);
+            const errorBody = await response.text();
+            console.error("Shopify API Error:", errorBody);
+            throw new Error(`Shopify API responded with status ${response.status}. Check store URL and token.`);
         }
         return await response.json();
     } catch (error) {
@@ -182,7 +204,17 @@ export async function getIntegrations() {
     const integrationsCollection = collection(firestore, "integrations");
     const snapshot = await getDocs(integrationsCollection);
     if (snapshot.empty) return [];
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const integrationsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Ensure essential integrations are present, add them if not
+    const required = ['google-maps', 'shopify', 'retell-ai'];
+    for (const name of required) {
+        if (!integrationsList.find(i => i.id === name)) {
+            const newIntegration = { name, active: false, key: '' };
+            await setDoc(doc(firestore, "integrations", name), newIntegration);
+            integrationsList.push({ id: name, ...newIntegration });
+        }
+    }
+    return integrationsList;
   } catch (error) {
     console.error("Error fetching integrations: ", error);
     return [];

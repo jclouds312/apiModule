@@ -124,7 +124,7 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
   const handleSettings = () => {
       toast({
           title: "Configuration",
-          description: `Settings for ${name} are not yet implemented.`
+          description: `Settings for ${name} are managed in the 'API Integrations' section below.`
       });
   };
   
@@ -158,7 +158,7 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
             Test
         </Button>
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-          <Link href="/docs"><FileText className="mr-2 h-4 w-4" />Docs</Link>
+          <Link href="/docs" target="_blank"><FileText className="mr-2 h-4 w-4" />Docs</Link>
         </Button>
         <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={handleSettings}>
             <Settings className="h-4 w-4" />

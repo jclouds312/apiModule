@@ -27,8 +27,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore } from '@/firebase';
 import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 const registerSchema = z.object({
   displayName: z.string().min(2, { message: 'Display name must be at least 2 characters.' }),
@@ -212,18 +210,7 @@ export default function AuthForm({ type }: AuthFormProps) {
 
   return (
     <div className="space-y-6">
-       <Tabs defaultValue={type} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="login">Log In</TabsTrigger>
-          <TabsTrigger value="register">Register</TabsTrigger>
-        </TabsList>
-        <TabsContent value="login" className="pt-4">
-          <AuthFormContent type="login" />
-        </TabsContent>
-        <TabsContent value="register" className="pt-4">
-          <AuthFormContent type="register" />
-        </TabsContent>
-      </Tabs>
+       <AuthFormContent type={type} />
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

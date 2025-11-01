@@ -1,0 +1,243 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Modular APIs Hub - Documentation",
+    "description": "This is the automatically generated OpenAPI documentation for the Modular APIs Hub project. It describes the RESTful endpoints available in the application.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/modules": {
+      "get": {
+        "summary": "Get all API modules",
+        "description": "Retrieves the status and configuration of all API modules registered in Firestore.",
+        "tags": ["Modules"],
+        "responses": {
+          "200": {
+            "description": "A list of API modules.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiModule"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a new API module",
+        "description": "Adds a new API module to the Firestore database. Note: This is an admin-only operation, enforced by Firestore rules.",
+        "tags": ["Modules"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiModule"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Module registered successfully."
+          },
+          "400": {
+            "description": "Bad Request - Missing fields."
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/sales": {
+      "get": {
+        "summary": "Get all products",
+        "description": "Retrieves a list of all products from the Firestore 'products' collection.",
+        "tags": ["Sales"],
+        "responses": {
+          "200": {
+            "description": "A list of products.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new product",
+        "description": "Adds a new product to the Firestore 'products' collection.",
+        "tags": ["Sales"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product created successfully."
+          }
+        }
+      }
+    },
+    "/reservations": {
+      "get": {
+        "summary": "Get all reservations",
+        "description": "Retrieves all reservations from the Firestore 'reservations' collection.",
+        "tags": ["Reservations"],
+        "responses": {
+          "200": {
+            "description": "A list of reservations."
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new reservation",
+        "description": "Creates a new reservation. The logic is primarily handled by a Server Action, but this endpoint is available.",
+        "tags": ["Reservations"],
+        "responses": {
+          "200": {
+            "description": "Reservation created."
+          }
+        }
+      }
+    },
+    "/reports": {
+      "get": {
+        "summary": "Get sales report",
+        "description": "Generates a sales report. The logic is handled by a Server Action, but this endpoint is available.",
+        "tags": ["Reports"],
+        "responses": {
+          "200": {
+            "description": "Sales report data."
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "summary": "Get API status",
+        "description": "Returns the operational status of the backend.",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "System status object."
+          }
+        }
+      }
+    },
+    "/maps/geocode": {
+      "get": {
+        "summary": "Geocode an address",
+        "description": "Converts a street address to latitude/longitude coordinates using the Google Maps API.",
+        "tags": ["Google Maps"],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Geocoding result from Google Maps."
+          }
+        }
+      }
+    },
+    "/maps/places": {
+      "get": {
+        "summary": "Find nearby places",
+        "description": "Finds nearby places of a certain type (e.g., 'restaurant') based on latitude and longitude.",
+        "tags": ["Google Maps"],
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nearby places result from Google Maps."
+          }
+        }
+      }
+    },
+    "/retell/webhook": {
+      "post": {
+        "summary": "Retell AI Webhook",
+        "description": "Receives events from Retell AI voice agents.",
+        "tags": ["Voice"],
+        "responses": {
+          "200": {
+            "description": "Webhook received successfully."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiModule": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "category": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "inactive"] },
+          "usageCount": { "type": "number" }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "category": { "type": "string" },
+          "stock": { "type": "number" }
+        }
+      }
+    }
+  }
+}
