@@ -7,15 +7,17 @@ import { NextResponse } from 'next/server';
  */
 export async function POST(request: Request) {
   try {
-    // It's crucial to validate the webhook signature in a production environment
-    // using the RETELL_WEBHOOK_SECRET.
-    const body = await request.json();
+    // In a production environment, you should validate the webhook signature
+    // using the RETELL_WEBHOOK_SECRET from your environment variables.
+    // Example: if (req.headers['x-retell-signature'] !== process.env.RETELL_WEBHOOK_SECRET) return res.status(401).send('invalid');
 
-    // For now, we'll just log the received event.
+    const event = await request.json();
+
+    // Log the entire event payload for debugging purposes.
     // In a real application, you would process this event, e.g.,
     // - Save conversation transcripts to Firestore.
-    // - Trigger other backend processes based on call status.
-    console.log('Retell AI webhook received:', JSON.stringify(body, null, 2));
+    // - Trigger other backend processes based on call status or content.
+    console.log('Retell AI webhook event received:', JSON.stringify(event, null, 2));
 
     // Retell AI expects a 200 OK response to acknowledge receipt of the webhook.
     return NextResponse.json({ status: 'ok' });
