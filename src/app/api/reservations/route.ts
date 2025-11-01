@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase';
 import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 
 export async function GET() {
   const { firestore } = initializeFirebase();
@@ -20,18 +19,17 @@ export async function GET() {
 export async function POST(request: Request) {
   const { firestore } = initializeFirebase();
   try {
-    const { servicio, fecha, hora, usuarioId } = await request.json();
+    const { service, date, time, userId } = await request.json();
     
-    // Basic validation
-    if (!servicio || !fecha || !hora || !usuarioId) {
+    if (!service || !date || !time || !userId) {
       return NextResponse.json({ success: false, message: 'Missing required fields.' }, { status: 400 });
     }
 
     const docRef = await addDoc(collection(firestore, "reservations"), {
-      service: servicio,
-      date: fecha,
-      time: hora,
-      userId: usuarioId,
+      service,
+      date,
+      time,
+      userId,
       status: "pending",
       createdAt: serverTimestamp()
     });

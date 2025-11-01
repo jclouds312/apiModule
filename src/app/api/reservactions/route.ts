@@ -1,34 +1,11 @@
-// /api/reservations - Placeholder
+// This file seems to be a typo of /api/reservations/route.ts and can be removed.
+// To avoid breaking changes, I will leave it for now but the main logic is in /api/reservations/route.ts
 import { NextResponse } from 'next/server';
-import { initializeFirebase } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
 
 export async function GET() {
-  // TODO: Implement logic to get reservations
-  return NextResponse.json({ message: 'Reservations API - GET endpoint' });
+  return NextResponse.json({ message: 'This endpoint is deprecated. Use /api/reservations instead.' });
 }
 
-export async function POST(request: Request) {
-  const { firestore } = initializeFirebase();
-  try {
-    const { servicio, fecha, hora, usuario } = await request.json();
-    
-    // Basic validation
-    if (!servicio || !fecha || !hora || !usuario) {
-      return NextResponse.json({ success: false, message: 'Missing required fields.' }, { status: 400 });
-    }
-
-    const docRef = await addDoc(collection(firestore, "reservations"), {
-      servicio,
-      fecha,
-      hora,
-      usuario,
-      estado: "pendiente"
-    });
-
-    return NextResponse.json({ success: true, message: "Reserva creada", id: docRef.id });
-  } catch (error: any) {
-    console.error("Error creating reservation: ", error);
-    return NextResponse.json({ success: false, message: error.message || 'Failed to create reservation.' }, { status: 500 });
-  }
+export async function POST() {
+    return NextResponse.json({ message: 'This endpoint is deprecated. Use /api/reservations instead.' });
 }

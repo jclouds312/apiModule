@@ -1,7 +1,7 @@
-// /api/sales - Placeholder
+// /api/sales
 import { NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function GET() {
   const { firestore } = initializeFirebase();
@@ -17,7 +17,16 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  // TODO: Implement logic to create a sale
-  const body = await request.json();
-  return NextResponse.json({ message: 'Sales API - POST endpoint', data: body });
+  const { firestore } = initializeFirebase();
+  try {
+    const { name, price, category, stock } = await request.json();
+    if (!name || !price || !category || !stock) {
+      return NextResponse.json({ success: false, message: 'Missing required fields for product.' }, { status: 400 });
+    }
+    const docRef = await addDoc(collection(firestore, "products"), { name, price, category, stock });
+    return NextResponse.json({ success: true, message: "Product created", id: docRef.id });
+  } catch (error: any) {
+    console.error("Error creating product: ", error);
+    return NextResponse.json({ success: false, message: error.message || 'Failed to create product.' }, { status: 500 });
+  }
 }
