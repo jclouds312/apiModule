@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
-import FOG from 'vanta/dist/vanta.fog.min';
+import WAVES from 'vanta/dist/vanta.waves.min';
 import * as THREE from 'three';
 
 export default function VantaBackground() {
@@ -11,9 +11,10 @@ export default function VantaBackground() {
   const vantaRef = useRef(null);
 
   useEffect(() => {
+    // Only initialize Vanta when the component mounts
     if (!vantaEffect) {
       setVantaEffect(
-        FOG({
+        WAVES({
           el: vantaRef.current,
           THREE: THREE,
           mouseControls: true,
@@ -21,33 +22,44 @@ export default function VantaBackground() {
           gyroControls: false,
           minHeight: 200.0,
           minWidth: 200.0,
-          highlightColor: theme === 'dark' ? 0x22d3ee : 0x3b82f6,
-          midtoneColor: theme === 'dark' ? 0x9333ea : 0x22d3ee,
-          lowlightColor: theme === 'dark' ? 0x0f172a : 0xc4b5fd,
-          baseColor: theme === 'dark' ? 0x0f172a : 0xffffff,
-          blurFactor: 0.5,
-          speed: 1.2,
-          zoom: 0.8,
+          scale: 1.0,
+          scaleMobile: 1.0,
+          // Colors are set in the next useEffect
         })
       );
     }
-  }, [theme, vantaEffect]);
+  }, [vantaEffect]); // Run only once
 
   useEffect(() => {
+    // Update colors when theme changes
     if (vantaEffect) {
       vantaEffect.setOptions({
-        highlightColor: theme === 'dark' ? 0x22d3ee : 0x3b82f6,
-        midtoneColor: theme === 'dark' ? 0x9333ea : 0x22d3ee,
-        lowlightColor: theme === 'dark' ? 0x0f172a : 0xc4b5fd,
-        baseColor: theme === 'dark' ? 0x0f172a : 0xffffff,
+        color: theme === 'dark' ? 0x152238 : 0x93c5fd, // A darker blue for dark, a light blue for light
+        shininess: 35,
+        waveHeight: 15,
+        waveSpeed: 0.25,
+        zoom: 0.9,
       });
       vantaEffect.resize();
     }
 
+    // Cleanup function to destroy Vanta effect on unmount or re-render
     return () => {
-      if (vantaEffect) vantaEffect.destroy();
+      if (vantaEffect) {
+        // vantaEffect.destroy();
+      }
     };
   }, [theme, vantaEffect]);
+
+
+  // A separate effect for cleanup on component unmount
+   useEffect(() => {
+    return () => {
+      if (vantaEffect) {
+        vantaEffect.destroy();
+      }
+    };
+  }, [vantaEffect]);
 
   return (
     <div
