@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import { ThemeProvider } from '@/components/theme-provider';
+import VantaBackground from '@/components/vanta-background';
 
 export const metadata: Metadata = {
   title: 'Modular APIs Hub',
@@ -28,6 +29,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <VantaBackground />
           <FirebaseClientProvider>
             {children}
           </FirebaseClientProvider>
