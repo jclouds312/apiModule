@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 const registerSchema = z.object({
   displayName: z.string().min(2, { message: 'Display name must be at least 2 characters.' }),
@@ -44,9 +45,8 @@ type AuthFormProps = {
   type: 'login' | 'register';
 };
 
-export default function AuthForm({ type }: AuthFormProps) {
+const AuthFormContent = ({ type }: AuthFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
@@ -57,11 +57,9 @@ export default function AuthForm({ type }: AuthFormProps) {
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      displayName: '',
-      email: '',
-      password: '',
-    },
+    defaultValues: isLogin 
+      ? { email: '', password: '' } 
+      : { displayName: '', email: '', password: '' },
   });
 
   const onSubmit = async (values: z.infer<typeof schema>) => {
@@ -79,8 +77,8 @@ export default function AuthForm({ type }: AuthFormProps) {
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, values.email, values.password);
-        toast({ title: 'Login successful!', description: 'Redirecting to dashboard...' });
-        router.push('/');
+        toast({ title: 'Login successful!', description: 'Welcome back!' });
+        router.refresh();
       } else {
         const registerValues = values as z.infer<typeof registerSchema>;
         const userCredential = await createUserWithEmailAndPassword(
@@ -99,8 +97,8 @@ export default function AuthForm({ type }: AuthFormProps) {
           role: 'customer', // default role
         });
 
-        toast({ title: 'Registration successful!', description: 'Redirecting to dashboard...' });
-        router.push('/');
+        toast({ title: 'Registration successful!', description: 'Welcome!' });
+        router.refresh();
       }
     } catch (error: any) {
       toast({
@@ -112,6 +110,67 @@ export default function AuthForm({ type }: AuthFormProps) {
       setIsLoading(false);
     }
   };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {!isLogin && (
+          <FormField
+            control={form.control}
+            name="displayName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Display Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="email@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isLogin ? 'Log In' : 'Create Account'}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+
+export default function AuthForm({ type }: AuthFormProps) {
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
@@ -125,7 +184,6 @@ export default function AuthForm({ type }: AuthFormProps) {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user document exists, if not, create it
       await setDoc(doc(firestore, 'users', user.uid), {
         uid: user.uid,
         email: user.email,
@@ -135,7 +193,7 @@ export default function AuthForm({ type }: AuthFormProps) {
       }, { merge: true });
 
       toast({ title: 'Signed in with Google!', description: 'Redirecting...' });
-      router.push('/');
+      router.refresh();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -149,68 +207,33 @@ export default function AuthForm({ type }: AuthFormProps) {
 
   return (
     <div className="space-y-6">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {!isLogin && (
-            <FormField
-              control={form.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Display Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="email@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLogin ? 'Log In' : 'Create Account'}
-          </Button>
-        </form>
-      </Form>
+       <Tabs defaultValue={type} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="login">Log In</TabsTrigger>
+          <TabsTrigger value="register">Register</TabsTrigger>
+        </TabsList>
+        <TabsContent value="login" className="pt-4">
+          <AuthFormContent type="login" />
+        </TabsContent>
+        <TabsContent value="register" className="pt-4">
+          <AuthFormContent type="register" />
+        </TabsContent>
+      </Tabs>
+
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+          <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
         </div>
       </div>
+
       <Button
         variant="outline"
         className="w-full"
         onClick={handleGoogleSignIn}
-        disabled={isLoading || isGoogleLoading}
+        disabled={isGoogleLoading}
       >
         {isGoogleLoading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -225,24 +248,6 @@ export default function AuthForm({ type }: AuthFormProps) {
         )}
         Google
       </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        {isLogin ? (
-          <>
-            Don't have an account?{' '}
-            <Link href="/register" className="font-semibold text-primary hover:underline">
-              Register
-            </Link>
-          </>
-        ) : (
-          <>
-            Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-primary hover:underline">
-              Log In
-            </Link>
-          </>
-        )}
-      </p>
     </div>
   );
 }
