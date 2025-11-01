@@ -16,6 +16,7 @@ import VoiceQuoteTool from './voice-quote-tool';
 import AiPlayground from './ai-playground';
 import GoogleMapsTool from './google-maps-tool';
 import IntegrationsManager from './integrations-manager';
+import { motion } from 'framer-motion';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -131,7 +132,12 @@ export default function DashboardPage() {
       <AppSidebar />
       <SidebarInset>
         <Header />
-        <main className="p-4 md:p-8">
+        <motion.main 
+          className="p-4 md:p-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className={user ? "lg:col-span-3" : "lg:col-span-2"}>
               <ApiModulesGrid />
@@ -154,7 +160,7 @@ export default function DashboardPage() {
                </div>
             )}
           </div>
-        </main>
+        </motion.main>
       </SidebarInset>
     </SidebarProvider>
   );
