@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for 'users' collection
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if isOwner(userId);
+    }
+
+    // Rules for 'products' collection
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Allow authenticated users to write
+    }
+
+    // Rules for 'sales' collection
+    match /sales/{saleId} {
+      allow read, write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Rules for 'reservations' collection
+    match /reservations/{reservationId} {
+      allow read, write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Rules for 'quotes' collection
+    match /quotes/{quoteId} {
+      allow read, write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
