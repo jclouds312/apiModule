@@ -17,6 +17,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
 import { askGemini } from '@/ai/flows/ask-gemini-flow';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -25,8 +27,18 @@ type ApiCardProps = {
   onToggle: (id: string) => void;
 };
 
+const categoryStyles: Record<string, string> = {
+    'Commerce': 'text-green-500 bg-green-500/10',
+    'Reservations': 'text-blue-500 bg-blue-500/10',
+    'Location': 'text-cyan-500 bg-cyan-500/10',
+    'AI': 'text-purple-500 bg-purple-500/10',
+    'Voice': 'text-pink-500 bg-pink-500/10',
+    'System': 'text-slate-500 bg-slate-500/10'
+};
+
+
 export default function ApiCard({ module, onToggle }: ApiCardProps) {
-  const { id, name, description, Icon, active } = module;
+  const { id, name, description, Icon, active, category } = module;
   const { toast } = useToast();
   const { user } = useUser();
 
@@ -112,13 +124,19 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
           description: `Settings for ${name} are not yet implemented.`
       });
   };
+  
+  const categoryStyle = categoryStyles[category] || categoryStyles['System'];
 
   return (
-    <div className="group relative flex flex-col justify-between p-5 bg-card/80 dark:bg-card/60 rounded-xl shadow-md hover:shadow-2xl border border-border/20 backdrop-blur-sm transition-all duration-300 ease-in-out hover:-translate-y-1">
+    <motion.div
+        whileHover={{ scale: 1.03, y: -5 }}
+        transition={{ type: "spring", stiffness: 300 }}
+        className="group relative flex flex-col justify-between p-5 bg-card/80 dark:bg-card/60 rounded-xl shadow-md border border-border/20 backdrop-blur-sm"
+    >
       <div>
         <div className="flex items-start justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
-              <Icon className="h-7 w-7 text-primary" />
+            <div className={cn("flex h-12 w-12 items-center justify-center rounded-lg mb-4", categoryStyle)}>
+              <Icon className="h-7 w-7" />
             </div>
             <Switch
               checked={active}
@@ -143,6 +161,6 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
             <Settings className="h-4 w-4" />
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }
