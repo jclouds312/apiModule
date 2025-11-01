@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { initializeFirebase } from "@/firebase";
-import { collection, getDocs, doc, setDoc, addDoc } from "firebase/firestore";
-import { auth } from "firebase-admin";
+import { collection, getDocs, doc, setDoc, addDoc, getDoc } from "firebase/firestore";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002/api';
 
@@ -33,7 +32,11 @@ export async function getProducts() {
 }
 
 // Reservations
-export async function createReservation(data: { servicio: string, fecha: string, hora: string, usuario?: string }) {
+export async function getReservations() {
+    return fetchApi('/reservations');
+}
+
+export async function createReservation(data: { servicio: string, fecha: string, hora: string, usuarioId: string }) {
     const result = await fetchApi('/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -69,11 +72,38 @@ export async function getApiStatus() {
 
 // Google Maps
 export async function geocodeAddress(address: string) {
-    return fetchApi(`/maps/geocode?address=${encodeURIComponent(address)}`);
+    // We need to retrieve the API key from a secure, server-side location.
+    // We'll read it from the 'integrations' collection in Firestore.
+    const { firestore } = initializeFirebase();
+    const integrationDoc = await getDoc(doc(firestore, "integrations", "google-maps"));
+
+    if (!integrationDoc.exists() || !integrationDoc.data()?.active) {
+        return { status: 'ERROR', error_message: 'Google Maps integration is not active or configured.' };
+    }
+    const apiKey = integrationDoc.data()?.key;
+    if (!apiKey) {
+         return { status: 'ERROR', error_message: 'Google Maps API key is not set.' };
+    }
+    
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+    const resp = await fetch(url, { cache: 'no-store' });
+    return resp.json();
 }
 
 export async function findNearbyPlaces(lat: number, lng: number, type: string) {
-    return fetchApi(`/maps/places?lat=${lat}&lng=${lng}&type=${type}`);
+    const { firestore } = initializeFirebase();
+    const integrationDoc = await getDoc(doc(firestore, "integrations", "google-maps"));
+     if (!integrationDoc.exists() || !integrationDoc.data()?.active) {
+        return { status: 'ERROR', error_message: 'Google Maps integration is not active or configured.' };
+    }
+    const apiKey = integrationDoc.data()?.key;
+    if (!apiKey) {
+         return { status: 'ERROR', error_message: 'Google Maps API key is not set.' };
+    }
+    
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=2000&type=${type}&key=${apiKey}`;
+    const resp = await fetch(url, { cache: 'no-store' });
+    return resp.json();
 }
 
 // Integrations
@@ -91,15 +121,15 @@ export async function getIntegrations() {
   }
 }
 
-export async function updateIntegration(name: string, data: { active: boolean, key?: string }) {
+export async function updateIntegration(id: string, data: Partial<{ active: boolean; key: string }>) {
   const { firestore } = initializeFirebase();
   try {
-    const integrationRef = doc(firestore, "integrations", name);
+    const integrationRef = doc(firestore, "integrations", id);
     await setDoc(integrationRef, data, { merge: true });
     revalidatePath('/'); // Revalidate the page to show the updated state
-    return { success: true, message: `Integration ${name} updated.` };
+    return { success: true, message: `Integration ${id} updated.` };
   } catch (error) {
-    console.error(`Error updating integration ${name}: `, error);
+    console.error(`Error updating integration ${id}: `, error);
     return { success: false, message: (error as Error).message };
   }
 }

@@ -12,7 +12,8 @@ import {
     getProducts, 
     sendTestNotification, 
     getSalesReport, 
-    getApiStatus 
+    getApiStatus,
+    getReservations
 } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
@@ -57,12 +58,10 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
                 result = await getProducts();
                 break;
             case 'reservations':
-                result = await createReservation({
-                    servicio: "API Test Service",
-                    fecha: new Date().toISOString().split('T')[0],
-                    hora: "12:00",
-                    usuario: user?.uid,
-                });
+                 result = await getReservations();
+                break;
+             case 'google-maps':
+                result = { success: true, message: "Use the 'Google Maps Tool' below to test Geocoding." };
                 break;
             case 'notifications':
                 result = await sendTestNotification();
@@ -137,7 +136,7 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
         <p className="text-sm text-muted-foreground">{description}</p>
       </CardContent>
       <CardFooter className="bg-muted/50 p-4 flex items-center justify-between">
-        <Button variant="outline" size="sm" onClick={handleTest} disabled={!active}>
+        <Button variant="outline" size="sm" onClick={handleTest}>
             <PlayCircle className="mr-2 h-4 w-4" />
             Test
         </Button>

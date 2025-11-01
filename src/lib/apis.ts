@@ -8,6 +8,7 @@ import {
   BarChart,
   Server,
   BookOpen,
+  Map,
 } from 'lucide-react';
 
 export type ApiModule = {
@@ -31,7 +32,14 @@ export const apiModules: ApiModule[] = [
     name: 'Reservations API',
     description: 'Handle service or event reservations with availability control.',
     Icon: Calendar,
-    defaultActive: false,
+    defaultActive: true,
+  },
+    {
+    id: 'google-maps',
+    name: 'Google Maps API',
+    description: 'Geocoding and place search functionalities.',
+    Icon: Map,
+    defaultActive: true,
   },
   {
     id: 'voice-to-text',
@@ -52,14 +60,14 @@ export const apiModules: ApiModule[] = [
     name: 'Notifications API',
     description: 'Send automated notifications via email, WhatsApp, or SMS.',
     Icon: Bell,
-    defaultActive: false,
+    defaultActive: true,
   },
   {
     id: 'reports',
     name: 'Reports API',
     description: 'Dashboard for sales & reservations data with export functionality.',
     Icon: BarChart,
-    defaultActive: false,
+    defaultActive: true,
   },
   {
     id: 'api-status',

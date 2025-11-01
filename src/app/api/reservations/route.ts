@@ -1,7 +1,8 @@
-// /api/reservations - Placeholder
+// /api/reservations
 import { NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 export async function GET() {
   const { firestore } = initializeFirebase();
@@ -19,19 +20,20 @@ export async function GET() {
 export async function POST(request: Request) {
   const { firestore } = initializeFirebase();
   try {
-    const { servicio, fecha, hora, usuario } = await request.json();
+    const { servicio, fecha, hora, usuarioId } = await request.json();
     
     // Basic validation
-    if (!servicio || !fecha || !hora || !usuario) {
+    if (!servicio || !fecha || !hora || !usuarioId) {
       return NextResponse.json({ success: false, message: 'Missing required fields.' }, { status: 400 });
     }
 
     const docRef = await addDoc(collection(firestore, "reservations"), {
-      servicio,
-      fecha,
-      hora,
-      usuario,
-      estado: "pendiente"
+      service: servicio,
+      date: fecha,
+      time: hora,
+      userId: usuarioId,
+      status: "pending",
+      createdAt: serverTimestamp()
     });
 
     return NextResponse.json({ success: true, message: "Reserva creada", id: docRef.id });
