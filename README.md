@@ -8,10 +8,10 @@ This project utilizes a modern, integrated architecture built on Next.js, levera
 
 ### Backend
 
-The backend is built using **Next.js API Routes**. Instead of a separate server (like Express), our API endpoints are defined directly within the `src/app/api/` directory.
+The backend is built using **Next.js API Routes** and **Server Actions**. Instead of a separate server (like Express), our API endpoints are defined directly within the `src/app/api/` directory or as secure server-callable functions.
 
-- Each subdirectory corresponds to a RESTful resource (e.g., `/api/sales`, `/api/reservations`).
-- Each `route.ts` file within these directories handles the HTTP methods (GET, POST, etc.) for that endpoint.
+- Each subdirectory in `/api/` corresponds to a RESTful resource (e.g., `/api/sales`, `/api/reservations`).
+- Server Actions in `src/lib/actions.ts` handle mutations and data submissions securely from the client.
 - This approach unifies the frontend and backend in a single project, simplifying development and deployment.
 
 ### Frontend
@@ -21,13 +21,13 @@ The frontend is built with **React** and **Next.js App Router**, using Server Co
 - **UI Components**: We use `shadcn/ui` for beautiful and accessible components.
 - **Styling**: Tailwind CSS is used for styling, configured via `tailwind.config.ts` and `src/app/globals.css`.
 
-### Database
+### Database & Authentication
 
-**Firebase Firestore** is our primary database.
+**Firebase** is our service backend.
 
-- **Data Models**: Defined in `docs/backend.json`, which acts as a blueprint for our data structures.
-- **Security**: Firestore Security Rules are managed in `firestore.rules` to protect data.
-- **Interaction**: We use the Firebase client-side SDK (`firebase`) throughout the app, even in API Routes. This allows for a consistent API and easy integration with Firebase Authentication. Custom hooks like `useUser`, `useCollection`, and `useDoc` simplify real-time data fetching in the frontend.
+- **Database**: **Firestore** is our primary NoSQL database. The data models are outlined in `docs/backend.json`, and security is enforced via `firestore.rules`.
+- **Authentication**: We use **Firebase Authentication** for user management, supporting both email/password and Google Sign-In.
+- **Interaction**: We use the Firebase client-side SDK (`firebase`) and custom hooks like `useUser`, `useCollection`, and `useDoc` to simplify real-time data fetching in the frontend.
 
 ### Generative AI
 
@@ -36,13 +36,24 @@ We use **Genkit**, Google's official framework for building AI-powered applicati
 - **Flows**: AI logic is encapsulated in "flows" located in `src/ai/flows/`. These flows define chains of operations, like calling the Gemini model.
 - **Example**: `voiceCommandToQuote` is a flow that takes audio, transcribes it, generates a JSON quote, and saves it to Firestore, all in one server-side operation.
 
-### Server-Side Logic
+### Deployment
 
-For server-side operations that are called from the client (like form submissions or button clicks), we use **Next.js Server Actions**.
+The application is pre-configured for **Firebase App Hosting**.
 
-- These are functions defined in `'use server';` files (e.g., `src/lib/actions.ts`).
-- They allow the frontend to call backend logic securely without manually creating API endpoints for every action, simplifying the code for mutations and data fetching.
+- The `apphosting.yaml` file defines the build and run configuration for Firebase.
+- When connected to a Git repository, Firebase App Hosting can automatically build and deploy the application upon pushes to the main branch, providing a seamless CI/CD experience.
 
 ## Getting Started
 
-To get started, explore the components in `src/components/` and the API routes in `src/app/api/`. The main page is `src/app/page.tsx`, which renders the `DashboardPage`.
+1.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+2.  **Set up environment variables**:
+    - Copy the `.env.example` file to `.env` (if it exists) or create a new `.env` file.
+    - You will need to add your Firebase project configuration keys and any other necessary API keys (like `GEMINI_API_KEY`).
+3.  **Run the development server**:
+    ```bash
+    npm run dev
+    ```
+This will start the Next.js application on `http://localhost:9002`.
