@@ -10,6 +10,7 @@ import {
   BookOpen,
   Map,
   Store,
+  Cpu,
 } from 'lucide-react';
 
 export type ApiModule = {
@@ -51,9 +52,16 @@ export const apiModules: ApiModule[] = [
   },
   {
     id: 'voice-to-text',
-    name: 'Voice-to-Text API',
-    description: 'Transcribe voice commands and generate JSON quotes automatically.',
+    name: 'Voice AI API',
+    description: 'Transcribe voice and generate JSON quotes with Genkit.',
     Icon: Mic,
+    defaultActive: true,
+  },
+  {
+    id: 'gemini-ai',
+    name: 'Gemini AI API',
+    description: 'Process text and generate content with Google Gemini.',
+    Icon: Cpu,
     defaultActive: true,
   },
   {

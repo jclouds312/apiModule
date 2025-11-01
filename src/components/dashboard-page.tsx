@@ -89,7 +89,20 @@ function ProductList() {
 
 function ApiModulesGrid() {
   const [modules, setModules] = useState<ApiModuleWithState[]>(
-    apiModules.map((m) => ({ ...m, active: m.defaultActive }))
+    apiModules.map((m) => {
+        // Add Gemini AI to the list
+        if (m.id === 'voice-to-text' && !apiModules.find(mod => mod.id === 'gemini-ai')) {
+             return [{ ...m, active: m.defaultActive }, {
+                id: 'gemini-ai',
+                name: 'Gemini AI',
+                description: 'Process text and generate content with Google Gemini.',
+                Icon: m.Icon,
+                defaultActive: true,
+                active: true,
+            }];
+        }
+        return { ...m, active: m.defaultActive }
+    }).flat()
   );
 
   const toggleApiModule = (id: string) => {
@@ -110,13 +123,19 @@ function ApiModulesGrid() {
           Activate, deactivate, and manage your APIs.
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-        {modules.map((mod) => (
-          <ApiCard
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {modules.map((mod, index) => (
+          <motion.div
             key={mod.id}
-            module={mod}
-            onToggle={() => toggleApiModule(mod.id)}
-          />
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.05 }}
+          >
+            <ApiCard
+              module={mod}
+              onToggle={() => toggleApiModule(mod.id)}
+            />
+          </motion.div>
         ))}
       </div>
     </div>

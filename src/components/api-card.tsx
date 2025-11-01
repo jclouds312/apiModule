@@ -1,23 +1,22 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import type { ApiModule } from '@/lib/apis';
+import { Switch } from "@/components/ui/switch";
 import { Button } from "./ui/button";
-import { Code, FileText, Settings, PlayCircle, PlusCircle } from "lucide-react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { PlayCircle, Settings, FileText } from "lucide-react";
+import Link from 'next/link';
 import { 
-    createReservation, 
+    getReservations,
     getProducts, 
     sendTestNotification, 
     getSalesReport, 
     getApiStatus,
-    getReservations,
-    getShopifyProducts
+    getShopifyProducts,
+    geocodeAddress
 } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
+import { askGemini } from '@/ai/flows/ask-gemini-flow';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -41,7 +40,8 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
       return;
     }
 
-    if (!user && ['sales', 'reservations', 'notifications', 'reports', 'shopify'].includes(id)) {
+    const authRequiredApis = ['sales', 'reservations', 'notifications', 'reports', 'shopify', 'gemini-ai'];
+    if (!user && authRequiredApis.includes(id)) {
         toast({
             variant: "destructive",
             title: "Authentication Required",
@@ -61,11 +61,14 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
             case 'reservations':
                  result = await getReservations();
                 break;
-             case 'google-maps':
-                result = { success: true, message: "Use the 'Google Maps Tool' below to test Geocoding." };
+            case 'google-maps':
+                result = await geocodeAddress('1600 Amphitheatre Parkway, Mountain View, CA');
                 break;
             case 'shopify':
                 result = await getShopifyProducts();
+                break;
+            case 'gemini-ai':
+                result = await askGemini({ question: "What is the capital of France?" });
                 break;
             case 'notifications':
                 result = await sendTestNotification();
@@ -80,10 +83,10 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
                 result = { success: true, message: "Authentication is handled via the UI. Try logging in." };
                 break;
             case 'voice-to-text':
-                result = { success: true, message: "Use the 'Voice to Quote' tool below to test." };
+                result = { success: true, message: "Use the 'Voice to Quote' tool to test this feature." };
                 break;
             case 'documentation':
-                result = { success: true, message: "Documentation endpoint is not yet implemented." };
+                 result = { success: true, message: "Use the 'Docs' button to see the OpenAPI documentation." };
                 break;
             default:
                 result = { success: false, message: "Test not implemented for this module." };
@@ -111,48 +114,35 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
-      <CardHeader className="p-4">
+    <div className="group relative flex flex-col justify-between p-5 bg-card/80 dark:bg-card/60 rounded-xl shadow-md hover:shadow-2xl border border-border/20 backdrop-blur-sm transition-all duration-300 ease-in-out hover:-translate-y-1">
+      <div>
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-              <Icon className="h-6 w-6 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
+              <Icon className="h-7 w-7 text-primary" />
             </div>
-            <div>
-              <CardTitle className="text-lg font-semibold font-headline">{name}</CardTitle>
-               <p className={cn(
-                 "text-sm font-medium",
-                 active ? "text-primary" : "text-muted-foreground"
-               )}>
-                 {active ? "Active" : "Inactive"}
-               </p>
-            </div>
-          </div>
-          <Switch
-            checked={active}
-            onCheckedChange={() => onToggle(id)}
-            aria-label={`Activate ${name}`}
-            className="data-[state=checked]:bg-primary"
-          />
+            <Switch
+              checked={active}
+              onCheckedChange={() => onToggle(id)}
+              aria-label={`Activate ${name}`}
+              className="data-[state=checked]:bg-primary"
+            />
         </div>
-      </CardHeader>
-      <CardContent className="flex-grow p-4 pt-0">
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-      <CardFooter className="bg-muted/50 p-4 flex items-center justify-between">
-        <Button variant="outline" size="sm" onClick={handleTest}>
+        <h3 className="text-lg font-bold font-headline text-foreground">{name}</h3>
+        <p className="text-sm text-muted-foreground mt-1 min-h-[40px]">{description}</p>
+      </div>
+
+      <div className="mt-4 flex items-center justify-end gap-1">
+        <Button variant="ghost" size="sm" onClick={handleTest} className="text-muted-foreground hover:text-foreground">
             <PlayCircle className="mr-2 h-4 w-4" />
             Test
         </Button>
-        <div className="flex items-center justify-end space-x-1">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/docs"><FileText className="mr-2 h-4 w-4" />Docs</Link>
-            </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSettings}>
-              <Settings className="h-4 w-4" />
-            </Button>
-        </div>
-      </CardFooter>
-    </Card>
+        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+          <Link href="/docs"><FileText className="mr-2 h-4 w-4" />Docs</Link>
+        </Button>
+        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={handleSettings}>
+            <Settings className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
