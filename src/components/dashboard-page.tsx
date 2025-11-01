@@ -32,9 +32,11 @@ function ProductList() {
                 if (Array.isArray(productList)) {
                     setProducts(productList);
                 } else {
+                    console.error("getProducts did not return an array:", productList);
                     setProducts([]);
                 }
             } catch (e) {
+                console.error("Failed to fetch products:", e);
                 setProducts([]);
             } finally {
                 setLoading(false);
@@ -62,7 +64,7 @@ function ProductList() {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center">Loading products...</TableCell>
+                                    <TableCell colSpan={4} className="text-center h-24">Loading products...</TableCell>
                                 </TableRow>
                             ) : products.length > 0 ? (
                                 products.map((product) => (
@@ -75,7 +77,7 @@ function ProductList() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center">No products found. Add some to your 'products' collection in Firestore.</TableCell>
+                                    <TableCell colSpan={4} className="text-center h-24">No products found. Add some to your 'products' collection in Firestore.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -89,20 +91,7 @@ function ProductList() {
 
 function ApiModulesGrid() {
   const [modules, setModules] = useState<ApiModuleWithState[]>(
-    apiModules.map((m) => {
-        // Add Gemini AI to the list
-        if (m.id === 'voice-to-text' && !apiModules.find(mod => mod.id === 'gemini-ai')) {
-             return [{ ...m, active: m.defaultActive }, {
-                id: 'gemini-ai',
-                name: 'Gemini AI',
-                description: 'Process text and generate content with Google Gemini.',
-                Icon: m.Icon,
-                defaultActive: true,
-                active: true,
-            }];
-        }
-        return { ...m, active: m.defaultActive }
-    }).flat()
+    apiModules.map((m) => ({ ...m, active: m.defaultActive }))
   );
 
   const toggleApiModule = (id: string) => {
