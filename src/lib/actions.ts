@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { initializeFirebase } from "@/firebase";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, addDoc } from "firebase/firestore";
+import { auth } from "firebase-admin";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002/api';
 
@@ -32,7 +33,7 @@ export async function getProducts() {
 }
 
 // Reservations
-export async function createReservation(data: any) {
+export async function createReservation(data: { servicio: string, fecha: string, hora: string, usuario?: string }) {
     const result = await fetchApi('/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,11 +1,19 @@
 // /api/reservations - Placeholder
 import { NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 export async function GET() {
-  // TODO: Implement logic to get reservations
-  return NextResponse.json({ message: 'Reservations API - GET endpoint' });
+  const { firestore } = initializeFirebase();
+  try {
+    const reservationsCollection = collection(firestore, "reservations");
+    const snapshot = await getDocs(reservationsCollection);
+    const reservationList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return NextResponse.json(reservationList);
+  } catch (error: any) {
+    console.error("Error fetching reservations: ", error);
+    return NextResponse.json({ success: false, message: error.message || 'Failed to fetch reservations.' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
