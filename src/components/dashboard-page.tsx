@@ -8,7 +8,7 @@ import AppSidebar from './app-sidebar';
 import Header from './header';
 import { useUser } from '@/firebase';
 import AuthForm from './auth-form';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { getProducts } from '@/lib/actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
@@ -17,6 +17,8 @@ import AiPlayground from './ai-playground';
 import GoogleMapsTool from './google-maps-tool';
 import IntegrationsManager from './integrations-manager';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Button } from './ui/button';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -131,6 +133,27 @@ function ApiModulesGrid() {
   );
 }
 
+const WelcomeCard = () => (
+    <Card className="lg:col-span-1">
+        <CardHeader>
+            <CardTitle className="text-xl font-headline">Welcome to Modular APIs Hub</CardTitle>
+            <CardDescription>
+                Log in or create an account to manage your APIs, test endpoints, and view usage statistics.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+           <div className="flex flex-col gap-3">
+                <Button asChild>
+                    <Link href="/login">Log In</Link>
+                </Button>
+                <Button asChild variant="secondary">
+                     <Link href="/register">Register</Link>
+                </Button>
+           </div>
+        </CardContent>
+    </Card>
+);
+
 
 export default function DashboardPage() {
   const { user, loading } = useUser();
@@ -155,18 +178,7 @@ export default function DashboardPage() {
               {user && <GoogleMapsTool />}
               <ProductList />
             </div>
-            {!user && !loading && (
-               <div className="lg:col-span-1">
-                 <Card>
-                   <CardHeader>
-                     <CardTitle className="text-xl font-headline">Get Started</CardTitle>
-                   </CardHeader>
-                   <CardContent>
-                     <AuthForm type="login" />
-                   </CardContent>
-                 </Card>
-               </div>
-            )}
+            {!user && !loading && <WelcomeCard />}
           </div>
         </motion.main>
       </SidebarInset>
