@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from './ui/badge';
 import VoiceQuoteTool from './voice-quote-tool';
 import AiPlayground from './ai-playground';
+import GoogleMapsTool from './google-maps-tool';
 
 type ApiModuleWithState = ApiModule & { active: boolean };
 
@@ -126,6 +127,7 @@ export default function DashboardPage() {
               <ApiModulesGrid />
               {user && <VoiceQuoteTool />}
               {user && <AiPlayground />}
+              {user && <GoogleMapsTool />}
               <ProductList />
             </div>
             {!user && !loading && (

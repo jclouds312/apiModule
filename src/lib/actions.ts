@@ -64,3 +64,12 @@ export async function getSalesReport() {
 export async function getApiStatus() {
     return fetchApi('/status');
 }
+
+// Google Maps
+export async function geocodeAddress(address: string) {
+    return fetchApi(`/maps/geocode?address=${encodeURIComponent(address)}`);
+}
+
+export async function findNearbyPlaces(lat: number, lng: number, type: string) {
+    return fetchApi(`/maps/places?lat=${lat}&lng=${lng}&type=${type}`);
+}
