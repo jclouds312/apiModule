@@ -13,7 +13,8 @@ import {
   Cpu,
   KeyRound,
   FileCode,
-  LineChart
+  LineChart,
+  PhoneCall
 } from 'lucide-react';
 
 export type ApiModule = {
@@ -64,6 +65,14 @@ export const apiModules: ApiModule[] = [
     description: 'Transcribe voice and generate JSON quotes automatically with Genkit.',
     Icon: Mic,
     defaultActive: true,
+    category: 'Voice',
+  },
+   {
+    id: 'retell-ai',
+    name: 'Retell AI',
+    description: 'Build and manage voice agents with conversational AI.',
+    Icon: PhoneCall,
+    defaultActive: false,
     category: 'Voice',
   },
   {

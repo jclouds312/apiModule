@@ -97,6 +97,9 @@ export default function ApiCard({ module, onToggle }: ApiCardProps) {
             case 'voice-to-text':
                 result = { success: true, message: "Use the 'Voice to Quote' tool to test this feature." };
                 break;
+            case 'retell-ai':
+                result = { success: true, message: "Retell AI is configured via webhooks. Check server logs for webhook events." };
+                break;
             case 'documentation':
                  result = { success: true, message: "Use the 'Docs' button to see the OpenAPI documentation." };
                 break;
