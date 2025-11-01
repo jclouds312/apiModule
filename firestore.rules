@@ -42,5 +42,10 @@ service cloud.firestore {
     match /integrations/{integrationId} {
         allow read, write: if isAdmin();
     }
+
+    // Rules for 'apiModules' collection - admin only
+    match /apiModules/{moduleId} {
+        allow read, write: if isAdmin();
+    }
   }
 }
